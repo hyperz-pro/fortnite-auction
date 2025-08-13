@@ -1,4 +1,20 @@
 import { useState, useEffect } from "react";
+import { initializeApp } from "firebase/app";
+import { getDatabase, ref, push, onValue } from "firebase/database";
+
+// Firebase config
+const firebaseConfig = {
+    apiKey: "AIzaSyDTKJ1upb8JDX2G_fQFLk74LP8U7f2UPfs",
+    authDomain: "fortnite-auction.firebaseapp.com",
+    databaseURL: "https://fortnite-auction-default-rtdb.firebaseio.com",
+    projectId: "fortnite-auction",
+    storageBucket: "fortnite-auction.appspot.com",
+    messagingSenderId: "189441008296",
+    appId: "1:189441008296:web:bb9929d5b3ae1d6c19589d"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
 
 const days = [
     { id: 1, name: "Wednesday - Week 1" },
@@ -12,12 +28,9 @@ const days = [
 const divisions = [2, 3, 4, 5];
 
 function App() {
-    const [bids, setBids] = useState(() => {
-        const saved = localStorage.getItem("bids");
-        return saved
-            ? JSON.parse(saved)
-            : days.reduce((acc, day) => ({ ...acc, [day.id]: [] }), {});
-    });
+    const [bids, setBids] = useState(
+        days.reduce((acc, day) => ({ ...acc, [day.id]: [] }), {})
+    );
 
     const [inputs, setInputs] = useState(
         days.reduce((acc, day) => ({ ...acc, [day.id]: { amount: "", discord: "" } }), {})
@@ -27,15 +40,21 @@ function App() {
         days.reduce((acc, day) => ({ ...acc, [day.id]: 2 }), {})
     );
 
+    const textShadow = "2px 2px 4px rgba(0,0,0,0.8)";
+
+    // Load live bids from Firebase
     useEffect(() => {
-        localStorage.setItem("bids", JSON.stringify(bids));
-    }, [bids]);
+        days.forEach(day => {
+            const dayRef = ref(db, `bids/${day.id}`);
+            onValue(dayRef, (snapshot) => {
+                const data = snapshot.val() || [];
+                setBids(prev => ({ ...prev, [day.id]: Object.values(data) }));
+            });
+        });
+    }, []);
 
     const handleInputChange = (dayId, field, value) => {
-        setInputs({
-            ...inputs,
-            [dayId]: { ...inputs[dayId], [field]: value },
-        });
+        setInputs({ ...inputs, [dayId]: { ...inputs[dayId], [field]: value } });
     };
 
     const handleDivisionChange = (dayId, value) => {
@@ -55,21 +74,11 @@ function App() {
             return;
         }
 
-        setBids({
-            ...bids,
-            [dayId]: [
-                ...bids[dayId],
-                { amount: bidValue, discord: discordName, division: selectedDivisions[dayId] },
-            ],
-        });
+        const dayRef = ref(db, `bids/${dayId}`);
+        push(dayRef, { amount: bidValue, discord: discordName, division: selectedDivisions[dayId] });
 
-        setInputs({
-            ...inputs,
-            [dayId]: { amount: "", discord: "" },
-        });
+        setInputs({ ...inputs, [dayId]: { amount: "", discord: "" } });
     };
-
-    const textShadow = "2px 2px 4px rgba(0,0,0,0.8)";
 
     return (
         <div

@@ -12,7 +12,6 @@ const days = [
 const divisions = [2, 3, 4, 5];
 
 function App() {
-    // Load bids from localStorage or initialize empty
     const [bids, setBids] = useState(() => {
         const saved = localStorage.getItem("bids");
         return saved
@@ -28,7 +27,6 @@ function App() {
         days.reduce((acc, day) => ({ ...acc, [day.id]: 2 }), {})
     );
 
-    // Save bids to localStorage whenever bids change
     useEffect(() => {
         localStorage.setItem("bids", JSON.stringify(bids));
     }, [bids]);
@@ -57,28 +55,47 @@ function App() {
             return;
         }
 
-        // Add bid to the list for that day
         setBids({
             ...bids,
-            [dayId]: [...bids[dayId], { amount: bidValue, discord: discordName, division: selectedDivisions[dayId] }],
+            [dayId]: [
+                ...bids[dayId],
+                { amount: bidValue, discord: discordName, division: selectedDivisions[dayId] },
+            ],
         });
 
-        // Clear input fields
         setInputs({
             ...inputs,
             [dayId]: { amount: "", discord: "" },
         });
     };
 
+    const textShadow = "2px 2px 4px rgba(0,0,0,0.8)";
+
     return (
-        <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center py-10">
-            <h1 className="text-4xl font-bold mb-2">Fortnite Boosting Bids</h1>
-            <p className="text-gray-400 mb-8 text-center max-w-xl">
-                I am a heats/group stage qualified player in the <span className="text-yellow-400">top 0.001%</span>.
-                Choose your day, select your division (2–5), enter your Discord name, and place your bid to be boosted by a top-tier player.
+        <div
+            style={{
+                minHeight: "100vh",
+                backgroundImage: "url('https://cdn2.unrealengine.com/en-en-fnce-37-00-globalchampionship-discoverytile-division1cup-1920x1080-1920x1080-6eaed3100d61.jpg')",
+                backgroundSize: "cover",
+                backgroundPosition: "center",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                padding: "2.5rem",
+                color: "white",
+            }}
+        >
+            <h1 style={{ fontSize: "2.5rem", fontWeight: "bold", marginBottom: "1rem", textShadow }}>
+                Fortnite Div Cup Carry
+            </h1>
+
+            <p style={{ color: "#D1D5DB", marginBottom: "2rem", textAlign: "center", maxWidth: "40rem" }}>
+                I am a heats/group stage qualified player in the <span style={{ color: "#FACC15", fontWeight: "bold" }}>top 0.001%</span>.
+                Choose your day, select your division (2-5), enter your Discord name, and place your bid to be boosted by a top-tier player.
             </p>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-4xl px-4">
+            <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem", alignItems: "center", width: "100%", maxWidth: "64rem" }}>
                 {days.map((day) => {
                     const dayBids = bids[day.id];
                     const highestBidEntry = dayBids.length > 0
@@ -86,13 +103,67 @@ function App() {
                         : null;
 
                     return (
-                        <div key={day.id} className="bg-gradient-to-br from-purple-700 to-pink-600 p-6 rounded-xl shadow-lg flex flex-col">
-                            <h2 className="text-xl font-semibold mb-4">{day.name}</h2>
+                        <div key={day.id} style={{
+                            background: "linear-gradient(to bottom right, #FACC15, #3B82F6)",
+                            padding: "1.5rem",
+                            borderRadius: "1rem",
+                            boxShadow: "0 10px 15px rgba(0,0,0,0.3)",
+                            display: "flex",
+                            flexDirection: "column",
+                            alignItems: "center",
+                            width: "100%"
+                        }}>
+                            <h2 style={{ fontSize: "1.5rem", fontWeight: "700", marginBottom: "1rem", color: "#FFFFFF", textShadow }}>
+                                {day.name}
+                            </h2>
 
-                            <label className="mb-1 text-sm">Select Division:</label>
+                            <label style={{ marginBottom: "0.25rem", fontSize: "0.875rem", color: "red" }}>Select Division:</label>
                             <select
                                 value={selectedDivisions[day.id]}
                                 onChange={(e) => handleDivisionChange(day.id, e.target.value)}
-                                className="mb-4 p-2 rounded bg-gray-800 text-white focus:outline-none"
+                                style={{ marginBottom: "1rem", padding: "0.5rem", borderRadius: "0.375rem", backgroundColor: "#1F2937", color: "red", border: "none" }}
                             >
                                 {divisions.map((div) => (
+                                    <option key={div} value={div}>
+                                        Division {div}
+                                    </option>
+                                ))}
+                            </select>
+
+                            <input
+                                type="text"
+                                placeholder="Enter your Discord name"
+                                value={inputs[day.id].discord}
+                                onChange={(e) => handleInputChange(day.id, "discord", e.target.value)}
+                                style={{ marginBottom: "0.5rem", padding: "0.5rem", borderRadius: "0.375rem", backgroundColor: "#374151", color: "#3B82F6", border: "none", fontWeight: "600", width: "100%" }}
+                            />
+
+                            <input
+                                type="number"
+                                placeholder="Enter your bid ($)"
+                                value={inputs[day.id].amount}
+                                onChange={(e) => handleInputChange(day.id, "amount", e.target.value)}
+                                style={{ marginBottom: "1rem", padding: "0.5rem", borderRadius: "0.375rem", backgroundColor: "#374151", color: "white", border: "none", fontWeight: "600", width: "100%" }}
+                            />
+
+                            <button
+                                onClick={() => handleSubmit(day.id)}
+                                style={{ backgroundColor: "#FACC15", color: "black", padding: "0.5rem 1rem", borderRadius: "0.375rem", fontWeight: "bold", cursor: "pointer" }}
+                            >
+                                Submit Bid
+                            </button>
+
+                            {highestBidEntry && (
+                                <p style={{ marginTop: "1rem", color: "limegreen", fontWeight: "700", fontSize: "1rem", textShadow }}>
+                                    Highest Bid: ${highestBidEntry.amount} | Discord: {highestBidEntry.discord} | Division {highestBidEntry.division}
+                                </p>
+                            )}
+                        </div>
+                    );
+                })}
+            </div>
+        </div>
+    );
+}
+
+export default App;
